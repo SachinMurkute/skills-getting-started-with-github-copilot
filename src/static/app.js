@@ -4,6 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // Guard: Ensure required elements exist
+  if (!activitiesList || !activitySelect || !signupForm || !messageDiv) {
+    console.error("Required DOM elements are missing. Check your HTML structure.");
+    return;
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -15,17 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
-
-        const spotsLeft = details.max_participants - details.participants.length;
-
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
+        const activityCard = createActivityCard(name, details);
 
         activitiesList.appendChild(activityCard);
 
@@ -39,6 +35,53 @@ document.addEventListener("DOMContentLoaded", () => {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
+  }
+
+  // Create activity card element
+  function createActivityCard(activityName, activity) {
+    const card = document.createElement("div");
+    card.className = "activity-card";
+
+    const title = document.createElement("h2");
+    title.textContent = activityName;
+    card.appendChild(title);
+
+    const desc = document.createElement("p");
+    desc.textContent = activity.description;
+    card.appendChild(desc);
+
+    const schedule = document.createElement("p");
+    schedule.innerHTML = `<strong>Schedule:</strong> ${activity.schedule}`;
+    card.appendChild(schedule);
+
+    const max = document.createElement("p");
+    max.innerHTML = `<strong>Max Participants:</strong> ${activity.max_participants}`;
+    card.appendChild(max);
+
+    // Participants section
+    const participantsSection = document.createElement("div");
+    participantsSection.className = "participants-section";
+    const participantsTitle = document.createElement("h3");
+    participantsTitle.textContent = "Participants";
+    participantsSection.appendChild(participantsTitle);
+    const participantsList = document.createElement("ul");
+    participantsList.className = "participants-list";
+    if (activity.participants && activity.participants.length > 0) {
+      activity.participants.forEach((email) => {
+        const li = document.createElement("li");
+        li.textContent = email;
+        participantsList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "No participants yet";
+      li.style.fontStyle = "italic";
+      participantsList.appendChild(li);
+    }
+    participantsSection.appendChild(participantsList);
+    card.appendChild(participantsSection);
+
+    return card;
   }
 
   // Handle form submission
